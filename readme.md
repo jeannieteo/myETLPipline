@@ -29,8 +29,8 @@ cd C:\Users\User\Projects\myETLPipline
 2. Create and activate a virtual environment (recommended):
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 ```
 
 If your PowerShell policy blocks activation, you may need to allow script execution for the current session:
