@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 
 app = Flask(__name__)
-
+# Just a simple mock server to pretend to be the RaaS endpoints
 # Mock endpoint for employee data
 @app.route('/raas/employees', methods=['GET'])
 def get_employees():
@@ -11,8 +11,10 @@ def get_employees():
             {"Employee_ID": "E1002", "First_Name": "Bobby, Kwan Yew", "Last_Name": "Lim", "Department": "D02", "Status": "INACTIVE"},
             {"Employee_ID": "E1003", "First_Name": "Cindy", "Last_Name": "Ng", "Department": "D03", "Status": "ACTIVE"},
             {"Employee_ID": "E1004", "First_Name": "Bruce", "Last_Name": "Wayne", "Department": "D04", "Status": "ACTIVE"},
-            {"Employee_ID": "E1005", "First_Name": "Dick", "Last_Name": "Grayson", "Department": "D04", "Status": "ACTIVE"}
+            {"Employee_ID": "E1005", "First_Name": "Dick", "Last_Name": "Grayson", "Department": "D04", "Status": "ACTIVE"},
+            {"Employee_ID": "E1005", "First_Name": "", "Last_Name": "", "Department": "D04", "Status": "INACTIVE"}
         ]
+        
     }
     return jsonify(data)
 # jsonify() is a built-in Flask function that converts Python dictionaries and objects into JSON response objects. 

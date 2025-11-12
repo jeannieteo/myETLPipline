@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timezone
 
 
-# Config
+# Config and constants
 DB_URL = "sqlite:///data/workday.db"
 EMP_URL = "http://localhost:5000/raas/employees"
 COMP_URL = "http://localhost:5000/raas/compensation"
@@ -16,14 +16,20 @@ MAX_RETRIES = 3
 RETRY_BACKOFF = 2  # seconds (exponential backoff)
 
 # Logging setup
-logger = logging.getLogger("workday_etl")
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False})  # sqlite tweak
+log_filename = "mylog_" + datetime.now().strftime("%Y_%m_%d") + ".txt"
+logger = logging.getLogger("workday_etl") # Create logger
+logger.setLevel(logging.INFO) # Set log level to INFO no need debug
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s") # Create format for logs
+file_handler = logging.FileHandler(log_filename) # --- File Handler ---
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+console_handler = logging.StreamHandler() # --- Console Handler ---
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
+# Database engine SQL Lite
+engine = create_engine(DB_URL, connect_args={"check_same_thread": False})  # check_same_thread = False for SQLite multithreading
 
 
 # Utility: HTTP GET with simple retries/backoff, returns dict
@@ -33,12 +39,12 @@ def http_get_with_retry(url: str):
         try:
             logger.info(f"GET {url} (attempt {attempt+1})")
             r = requests.get(url, timeout=10)
-            r.raise_for_status()
+            r.raise_for_status() # raise error if not 200
             return r.json()
         
         except RequestException as e:
             attempt += 1
-            wait = RETRY_BACKOFF ** attempt
+            wait = RETRY_BACKOFF ** attempt # wait time will increase exponentially
             logger.warning(f"Request failed: {e}. Retrying in {wait}s...")
             time.sleep(wait)
     raise RuntimeError(f"Failed to fetch {url} after {MAX_RETRIES} attempts")
@@ -67,12 +73,14 @@ def validate(emp_df: pd.DataFrame, comp_df: pd.DataFrame, dept_df: pd.DataFrame)
 
     # Compensation validations
     # salary < 0 or null, append to errors list
-    if (comp_df['Monthly_Salary'] <= 0).any(): 
+    # returns a Series of booleans (one boolean per row), so any() is needed to check if any row is True
+    if (comp_df['Monthly_Salary'] <= 0).amy(): 
         errors.append("Monthly_Salary must be > 0 in compensation dataset")
     if comp_df['Employee_ID'].isnull().any():
         errors.append("Null Employee_ID in compensation dataset")
 
     # Departments validations, if null dept_id append to errors list
+    # returns a Series of booleans (one boolean per row), so any() is needed to check if any row is True
     if dept_df['Department_ID'].isnull().any():
         errors.append("Null Department_ID in departments dataset")
 
@@ -83,7 +91,7 @@ def validate(emp_df: pd.DataFrame, comp_df: pd.DataFrame, dept_df: pd.DataFrame)
     if missing_comp:
         logger.warning(f"Employees without compensation records: {missing_comp}")  # not necessarily fatal
 
-    if errors:
+    if errors: # if any errors, raise exception
         raise ValueError("Validation failed: " + "; ".join(errors))
     logger.info("Validation passed")
 
@@ -94,11 +102,11 @@ def transform(emp_df: pd.DataFrame, comp_df: pd.DataFrame, dept_df: pd.DataFrame
     merged = pd.merge(emp_df, comp_df, on='Employee_ID', how='left')
     merged = pd.merge(merged, dept_df[['Department_ID', 'Department_Name']], on='Department_ID', how='left')
 
-    # Fill defaults
+    # Fill any NA with 0
     merged['Monthly_Salary'] = merged['Monthly_Salary'].fillna(0).astype(float)
     merged['Bonus'] = merged['Bonus'].fillna(0).astype(float)
 
-    # Calculated fields
+    # Calculated fields total salary = 12* monthly + bonus
     merged['Annual_Salary'] = merged['Monthly_Salary'] * 12
     merged['Total_Compensation'] = merged['Annual_Salary'] + merged['Bonus']
 

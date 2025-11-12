@@ -1,0 +1,5 @@
+  Department_ID Employee_ID      First_Name Last_Name  Status Department   Bonus  Monthly_Salary Department_Name  Annual_Salary  Total_Compensation                   etl_executed_at
+0           D01       E1001  Alice, Mui Mui       Tan  ACTIVE       None   800.0          5500.0         Finance        66000.0             66800.0  2025-11-12T09:45:36.104048+00:00
+1          None       E1003           Cindy        Ng  ACTIVE        D03  1000.0          6200.0            None        74400.0             75400.0  2025-11-12T09:45:36.104048+00:00
+2          None       E1004           Bruce     Wayne  ACTIVE        D04     0.0          7500.0            None        90000.0             90000.0  2025-11-12T09:45:36.104048+00:00
+3          None       E1005            Dick   Grayson  ACTIVE        D04     0.0          7500.0            None        90000.0             90000.0  2025-11-12T09:45:36.104048+00:00
